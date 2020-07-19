@@ -400,7 +400,6 @@ def update_parameters(parameters, grads, learning_rate):
                   parameters["W" + str(l)] = ...
                   parameters["b" + str(l)] = ...
     """
-
     L = len(parameters) // 2  # number of layers in the neural network
 
     # Update rule for each parameter. Use a for loop.
@@ -425,9 +424,6 @@ def L_layer_model(X, Y, layers_dims, learning_rate=0.0075, l1_term=0, self_scale
     Returns:
     parameters -- parameters learnt by the model. They can then be used to predict.
     """
-
-    costs = []  # keep track of cost
-
     # Parameters initialization. (≈ 1 line of code)
     parameters = initialize_parameters_deep(layers_dims)
 
@@ -448,20 +444,49 @@ def L_layer_model(X, Y, layers_dims, learning_rate=0.0075, l1_term=0, self_scale
             # Update parameters.
             parameters = update_parameters(parameters, grads, learning_rate)
 
-        #         # Print the cost every 100 training example
-        #         if print_cost and epoch_no % 50 == 0:
-        #             print ("Cost after epoch %i: %f" %(epoch_no, cost))
-        #         if print_cost and epoch_no % 50 == 0:
-        #             costs.append(cost)
         if print_cost:
             print("Cost after epoch %i: %f" % (epoch_no, cost))
 
     return parameters
 
 
+def neuron_is_inactive(idx, W, b, threshold=0.0001):
+    W_is_inactive = np.amax(np.abs(W), 1)[idx] < threshold
+    b_is_inactive = b[idx] < threshold
+    return W_is_inactive and b_is_inactive
+
+
+def neuron_count(W):
+    return
+
+
 def prune_parameters(parameters):
     L = len(parameters) // 2
 
+    for l in range(L - 1):
+        W_cur = parameters["W" + str(l + 1)]
+        b_cur = parameters["b" + str(l + 1)]
+        W_next = parameters["W" + str(l + 2)]
+
+        n_neurons = W_cur.shape[0]
+        for idx in reversed(range(0, n_neurons, 1)):
+            if neuron_is_inactive(idx, W_cur, b_cur):
+                # Delete the neuron
+                W_cur = np.delete(W_cur, idx, 0)
+                b_cur = np.delete(b_cur, idx, 0)
+                W_next = np.delete(W_next, idx, 1)
+
+        parameters["W" + str(l + 1)] = W_cur
+        parameters["b" + str(l + 1)] = b_cur
+        parameters["W" + str(l + 2)] = W_next
+
+
+def get_layer_sizes(parameters):
+    layer_sizes = list()
+    L = len(parameters) // 2
+
+    layer_sizes.append(parameters['W1'].shape[1])
     for l in range(L):
-        W = parameters["W" + str(l + 1)]
-        b = parameters["b" + str(l + 1)]
+        layer_sizes.append(parameters["W" + str(l + 1)].shape[0])
+
+    return layer_sizes
