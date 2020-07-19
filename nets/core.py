@@ -457,3 +457,11 @@ def L_layer_model(X, Y, layers_dims, learning_rate=0.0075, l1_term=0, self_scale
             print("Cost after epoch %i: %f" % (epoch_no, cost))
 
     return parameters
+
+
+def prune_parameters(parameters):
+    L = len(parameters) // 2
+
+    for l in range(L):
+        W = parameters["W" + str(l + 1)]
+        b = parameters["b" + str(l + 1)]
