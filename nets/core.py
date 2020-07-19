@@ -265,12 +265,15 @@ def compute_cost(AL, Y, parameters, l1_term, self_scale, self_scale_coef):
     error_cost = -1 / m * np.sum((Y * np.log(AL)) + ((1 - Y) * np.log(1 - AL)))
     reg_cost = 0
     for l in range(L):
-        W = parameters["W" + str(l + 1)]
+        W = parameters['W' + str(l + 1)]
+        b = parameters['b' + str(l + 1)]
         if self_scale:
             scaling_matrix = get_scaling_matrix(l1_term, W.shape[0], self_scale_coef)
             reg_cost += 1 / m * np.sum(scaling_matrix * np.abs(W))
+            reg_cost += 1 / m * np.sum(scaling_matrix * np.abs(b))
         else:
             reg_cost += l1_term / m * np.sum(np.abs(W))
+            reg_cost += l1_term / m * np.sum(np.abs(b))
     cost = error_cost + reg_cost
 
     cost = np.squeeze(cost)  # To make sure your cost's shape is what we expect (e.g. this turns [[17]] into 17).
@@ -298,9 +301,10 @@ def linear_backward(dZ, cache, l1_term, self_scale, self_scale_coef):
     if self_scale:
         scaling_matrix = get_scaling_matrix(l1_term, W.shape[0], self_scale_coef)
         dW = 1 / m * (dZ.dot(A_prev.T)) + scaling_matrix / m * np.sign(W)
+        db = 1 / m * np.sum(dZ, axis=1, keepdims=True) + scaling_matrix / m * np.sign(b)
     else:
         dW = 1 / m * (dZ.dot(A_prev.T)) + l1_term / m * np.sign(W)
-    db = 1 / m * np.sum(dZ, axis=1, keepdims=True)
+        db = 1 / m * np.sum(dZ, axis=1, keepdims=True) + l1_term / m * np.sign(b)
     dA_prev = W.T.dot(dZ)
 
     assert (dA_prev.shape == A_prev.shape)
