@@ -237,7 +237,16 @@ def L_model_forward(X, parameters):
     return AL, caches
 
 
-def compute_cost(AL, Y, parameters, l1_term, self_scale):
+def get_scaling_matrix(l1_term, n_output_neurons, self_scale_coef):
+    if self_scale_coef:
+        scaling_matrix = np.cumprod(np.full((n_output_neurons,), self_scale_coef)).reshape((n_output_neurons, 1))
+        scaling_matrix = scaling_matrix / scaling_matrix[-1] * l1_term
+    else:
+        scaling_matrix = np.linspace(0, l1_term, n_output_neurons).reshape((1, -1)).T
+    return scaling_matrix
+
+
+def compute_cost(AL, Y, parameters, l1_term, self_scale, self_scale_coef):
     """
     Implement the cost function defined by equation (7).
 
@@ -257,10 +266,9 @@ def compute_cost(AL, Y, parameters, l1_term, self_scale):
     reg_cost = 0
     for l in range(L):
         W = parameters["W" + str(l + 1)]
-        n_output_neurons = W.shape[0]
         if self_scale:
-            l1_scaling = np.linspace(0, l1_term, n_output_neurons).reshape((1, -1)).T
-            reg_cost += 1 / m * np.sum(l1_scaling * np.abs(W))
+            scaling_matrix = get_scaling_matrix(l1_term, W.shape[0], self_scale_coef)
+            reg_cost += 1 / m * np.sum(scaling_matrix * np.abs(W))
         else:
             reg_cost += l1_term / m * np.sum(np.abs(W))
     cost = error_cost + reg_cost
@@ -271,7 +279,7 @@ def compute_cost(AL, Y, parameters, l1_term, self_scale):
     return cost
 
 
-def linear_backward(dZ, cache, l1_term, self_scale):
+def linear_backward(dZ, cache, l1_term, self_scale, self_scale_coef):
     """
     Implement the linear portion of backward propagation for a single layer (layer l)
 
@@ -288,9 +296,8 @@ def linear_backward(dZ, cache, l1_term, self_scale):
     m = A_prev.shape[1]
 
     if self_scale:
-        n_output_neurons = W.shape[0]
-        l1_scaling = np.linspace(0, l1_term, n_output_neurons).reshape((1, -1)).T
-        dW = 1 / m * (dZ.dot(A_prev.T)) + l1_scaling / m * np.sign(W)
+        scaling_matrix = get_scaling_matrix(l1_term, W.shape[0], self_scale_coef)
+        dW = 1 / m * (dZ.dot(A_prev.T)) + scaling_matrix / m * np.sign(W)
     else:
         dW = 1 / m * (dZ.dot(A_prev.T)) + l1_term / m * np.sign(W)
     db = 1 / m * np.sum(dZ, axis=1, keepdims=True)
@@ -303,7 +310,7 @@ def linear_backward(dZ, cache, l1_term, self_scale):
     return dA_prev, dW, db
 
 
-def linear_activation_backward(dA, cache, activation, l1_term, self_scale):
+def linear_activation_backward(dA, cache, activation, l1_term, self_scale, self_scale_coef):
     """
     Implement the backward propagation for the LINEAR->ACTIVATION layer.
 
@@ -321,16 +328,16 @@ def linear_activation_backward(dA, cache, activation, l1_term, self_scale):
 
     if activation == "relu":
         dZ = relu_backward(dA, activation_cache)
-        dA_prev, dW, db = linear_backward(dZ, linear_cache, l1_term, self_scale)
+        dA_prev, dW, db = linear_backward(dZ, linear_cache, l1_term, self_scale, self_scale_coef)
 
     elif activation == "sigmoid":
         dZ = sigmoid_backward(dA, activation_cache)
-        dA_prev, dW, db = linear_backward(dZ, linear_cache, l1_term, self_scale)
+        dA_prev, dW, db = linear_backward(dZ, linear_cache, l1_term, self_scale, self_scale_coef)
 
     return dA_prev, dW, db
 
 
-def L_model_backward(AL, Y, caches, l1_term, self_scale):
+def L_model_backward(AL, Y, caches, l1_term, self_scale, self_scale_coef):
     """
     Implement the backward propagation for the [LINEAR->RELU] * (L-1) -> LINEAR -> SIGMOID group
 
@@ -357,18 +364,18 @@ def L_model_backward(AL, Y, caches, l1_term, self_scale):
 
     # Lth layer (SIGMOID -> LINEAR) gradients. Inputs: "dAL, current_cache". Outputs: "grads["dAL-1"], grads["dWL"], grads["dbL"]
     current_cache = caches[L - 1]
-    grads["dA" + str(L - 1)], grads["dW" + str(L)], grads["db" + str(L)] = linear_activation_backward(dAL,
-                                                                                                      current_cache,
-                                                                                                      "sigmoid",
-                                                                                                      l1_term,
-                                                                                                      self_scale)
+    grads["dA" + str(L - 1)], grads["dW" + str(L)], grads["db" + str(L)] = linear_activation_backward(
+        dAL, current_cache, "sigmoid", l1_term, self_scale, self_scale_coef
+    )
 
     # Loop from l=L-2 to l=0
     for l in reversed(range(L - 1)):
         # lth layer: (RELU -> LINEAR) gradients.
         # Inputs: "grads["dA" + str(l + 1)], current_cache". Outputs: "grads["dA" + str(l)] , grads["dW" + str(l + 1)] , grads["db" + str(l + 1)]
         current_cache = caches[l]
-        dA_prev_temp, dW_temp, db_temp = linear_activation_backward(grads["dA" + str(l + 1)], current_cache, "relu", l1_term, self_scale)
+        dA_prev_temp, dW_temp, db_temp = linear_activation_backward(
+            grads["dA" + str(l + 1)], current_cache, "relu", l1_term, self_scale, self_scale_coef
+        )
         grads["dA" + str(l)] = dA_prev_temp
         grads["dW" + str(l + 1)] = dW_temp
         grads["db" + str(l + 1)] = db_temp
@@ -399,7 +406,7 @@ def update_parameters(parameters, grads, learning_rate):
     return parameters
 
 
-def L_layer_model(X, Y, layers_dims, learning_rate=0.0075, l1_term=0, self_scale=False, num_epochs=3000, print_cost=False):  # lr was 0.009
+def L_layer_model(X, Y, layers_dims, learning_rate=0.0075, l1_term=0, self_scale=False, self_scale_coef=None, num_epochs=3000, print_cost=False):  # lr was 0.009
     """
     Implements a L-layer neural network: [LINEAR->RELU]*(L-1)->LINEAR->SIGMOID.
 
@@ -429,10 +436,10 @@ def L_layer_model(X, Y, layers_dims, learning_rate=0.0075, l1_term=0, self_scale
             AL, caches = L_model_forward(X_batch, parameters)
 
             # Compute cost.
-            cost = compute_cost(AL, y_batch, parameters, l1_term, self_scale)
+            cost = compute_cost(AL, y_batch, parameters, l1_term, self_scale, self_scale_coef)
 
             # Backward propagation.
-            grads = L_model_backward(AL, y_batch, caches, l1_term, self_scale)
+            grads = L_model_backward(AL, y_batch, caches, l1_term, self_scale, self_scale_coef)
 
             # Update parameters.
             parameters = update_parameters(parameters, grads, learning_rate)
