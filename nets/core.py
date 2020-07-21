@@ -242,7 +242,7 @@ def get_scaling_matrix(l1_term, n_output_neurons, self_scale_coef):
         scaling_matrix = np.cumprod(np.full((n_output_neurons,), self_scale_coef)).reshape((n_output_neurons, 1))
         scaling_matrix = scaling_matrix / scaling_matrix[-1] * l1_term
     else:
-        scaling_matrix = np.linspace(0, l1_term, n_output_neurons).reshape((1, -1)).T
+        scaling_matrix = np.linspace(0, l1_term * (n_output_neurons-1), n_output_neurons).reshape((1, -1)).T
     return scaling_matrix
 
 
