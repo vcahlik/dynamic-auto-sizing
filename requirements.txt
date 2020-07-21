@@ -3,3 +3,4 @@ pandas
 jupyterlab
 matplotlib
 scikit-learn
+keras

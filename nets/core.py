@@ -142,7 +142,7 @@ def initialize_parameters(layer_dims):
     L = len(layer_dims)  # number of layers in the network
 
     for l in range(1, L):
-        parameters['W' + str(l)] = np.random.randn(layer_dims[l], layer_dims[l - 1]) * 0.01
+        parameters['W' + str(l)] = np.random.randn(layer_dims[l], layer_dims[l-1]) * np.sqrt(2/layer_dims[l-1])
         parameters['b' + str(l)] = np.zeros((layer_dims[l], 1))
 
         assert (parameters['W' + str(l)].shape == (layer_dims[l], layer_dims[l - 1]))
@@ -456,17 +456,13 @@ def train_model(
     return parameters
 
 
-def neuron_is_inactive(idx, W, b, threshold=0.0001):
+def neuron_is_inactive(idx, W, b, threshold):
     W_is_inactive = np.amax(np.abs(W), 1)[idx] < threshold
     b_is_inactive = b[idx] < threshold
     return W_is_inactive and b_is_inactive
 
 
-def neuron_count(W):
-    return
-
-
-def prune_parameters(parameters):
+def prune_neurons(parameters, threshold=0.001):
     L = len(parameters) // 2
 
     for l in range(L - 1):
@@ -476,11 +472,32 @@ def prune_parameters(parameters):
 
         n_neurons = W_cur.shape[0]
         for idx in reversed(range(0, n_neurons, 1)):
-            if neuron_is_inactive(idx, W_cur, b_cur):
+            if neuron_is_inactive(idx, W_cur, b_cur, threshold):
                 # Delete the neuron
-                W_cur = np.delete(W_cur, idx, 0)
-                b_cur = np.delete(b_cur, idx, 0)
-                W_next = np.delete(W_next, idx, 1)
+                W_cur = np.delete(W_cur, idx, axis=0)
+                b_cur = np.delete(b_cur, idx, axis=0)
+                W_next = np.delete(W_next, idx, axis=1)
+
+        parameters["W" + str(l + 1)] = W_cur
+        parameters["b" + str(l + 1)] = b_cur
+        parameters["W" + str(l + 2)] = W_next
+
+
+def grow_neurons(parameters):
+    L = len(parameters) // 2
+
+    for l in range(L - 1):
+        W_cur = parameters["W" + str(l + 1)]
+        b_cur = parameters["b" + str(l + 1)]
+        W_next = parameters["W" + str(l + 2)]
+
+        n_neurons = W_cur.shape[0]
+        n_new_neurons = max(n_neurons // 10, 5)
+
+        # Grow the neurons
+        W_cur = np.concatenate((W_cur, np.random.randn(n_new_neurons, W_cur.shape[1]) * np.sqrt(2/W_cur.shape[1])), axis=0)
+        b_cur = np.concatenate((b_cur, np.zeros((n_new_neurons, 1))), axis=0)
+        W_next = np.concatenate((W_next, np.random.randn(W_next.shape[0], n_new_neurons) * np.sqrt(2/(W_next.shape[1]+n_new_neurons))), axis=1)
 
         parameters["W" + str(l + 1)] = W_cur
         parameters["b" + str(l + 1)] = b_cur
