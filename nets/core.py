@@ -126,7 +126,7 @@ def random_mini_batches(X, Y, mini_batch_size=64, seed=0):
     return mini_batches
 
 
-def initialize_parameters_deep(layer_dims):
+def initialize_parameters(layer_dims):
     """
     Arguments:
     layer_dims -- python array (list) containing the dimensions of each layer in our network
@@ -204,7 +204,7 @@ def linear_activation_forward(A_prev, W, b, activation):
     return A, cache
 
 
-def L_model_forward(X, parameters):
+def forward(X, parameters):
     """
     Implement forward propagation for the [LINEAR->RELU]*(L-1)->LINEAR->SIGMOID computation
 
@@ -341,7 +341,7 @@ def linear_activation_backward(dA, cache, activation, l1_term, self_scale, self_
     return dA_prev, dW, db
 
 
-def L_model_backward(AL, Y, caches, l1_term, self_scale, self_scale_coef):
+def backward(AL, Y, caches, l1_term, self_scale, self_scale_coef):
     """
     Implement the backward propagation for the [LINEAR->RELU] * (L-1) -> LINEAR -> SIGMOID group
 
@@ -409,7 +409,16 @@ def update_parameters(parameters, grads, learning_rate):
     return parameters
 
 
-def L_layer_model(X, Y, layers_dims, learning_rate=0.0075, l1_term=0, self_scale=False, self_scale_coef=None, num_epochs=3000, print_cost=False):  # lr was 0.009
+def train_model(
+        X,
+        Y,
+        parameters,
+        learning_rate=0.0075,
+        l1_term=0,
+        self_scale=False,
+        self_scale_coef=None,
+        num_epochs=3000,
+        print_cost=False):
     """
     Implements a L-layer neural network: [LINEAR->RELU]*(L-1)->LINEAR->SIGMOID.
 
@@ -424,22 +433,19 @@ def L_layer_model(X, Y, layers_dims, learning_rate=0.0075, l1_term=0, self_scale
     Returns:
     parameters -- parameters learnt by the model. They can then be used to predict.
     """
-    # Parameters initialization. (≈ 1 line of code)
-    parameters = initialize_parameters_deep(layers_dims)
-
     # Loop (gradient descent)
     for epoch_no in range(0, num_epochs):
         mini_batches = random_mini_batches(X, Y, 64)
 
         for X_batch, y_batch in mini_batches:
             # Forward propagation: [LINEAR -> RELU]*(L-1) -> LINEAR -> SIGMOID.
-            AL, caches = L_model_forward(X_batch, parameters)
+            AL, caches = forward(X_batch, parameters)
 
             # Compute cost.
             cost = compute_cost(AL, y_batch, parameters, l1_term, self_scale, self_scale_coef)
 
             # Backward propagation.
-            grads = L_model_backward(AL, y_batch, caches, l1_term, self_scale, self_scale_coef)
+            grads = backward(AL, y_batch, caches, l1_term, self_scale, self_scale_coef)
 
             # Update parameters.
             parameters = update_parameters(parameters, grads, learning_rate)
