@@ -483,7 +483,7 @@ def prune_neurons(parameters, threshold=0.001):
         parameters["W" + str(l + 2)] = W_next
 
 
-def grow_neurons(parameters):
+def grow_neurons(parameters, scaling_factor=0.1):
     L = len(parameters) // 2
 
     for l in range(L - 1):
@@ -497,7 +497,7 @@ def grow_neurons(parameters):
         # Grow the neurons
         W_cur = np.concatenate((W_cur, np.random.randn(n_new_neurons, W_cur.shape[1]) * np.sqrt(2/W_cur.shape[1])), axis=0)
         b_cur = np.concatenate((b_cur, np.zeros((n_new_neurons, 1))), axis=0)
-        W_next = np.concatenate((W_next, np.random.randn(W_next.shape[0], n_new_neurons) * np.sqrt(2/(W_next.shape[1]+n_new_neurons))), axis=1)
+        W_next = np.concatenate((W_next, np.random.randn(W_next.shape[0], n_new_neurons) * scaling_factor * np.sqrt(2/(W_next.shape[1]+n_new_neurons))), axis=1)
 
         parameters["W" + str(l + 1)] = W_cur
         parameters["b" + str(l + 1)] = b_cur
