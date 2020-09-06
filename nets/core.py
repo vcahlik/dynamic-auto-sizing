@@ -1,3 +1,5 @@
+from .utils import measure_accuracy
+
 import numpy as np
 import math
 
@@ -413,11 +415,11 @@ def train_model(
         X,
         Y,
         parameters,
-        learning_rate=0.0075,
+        learning_rate=0.01,
         l1_term=0,
         self_scale=False,
         self_scale_coef=None,
-        num_epochs=3000,
+        num_epochs=100,
         print_cost=False):
     """
     Implements a L-layer neural network: [LINEAR->RELU]*(L-1)->LINEAR->SIGMOID.
@@ -495,13 +497,43 @@ def grow_neurons(parameters, scaling_factor=0.1):
         n_new_neurons = max(n_neurons // 10, 5)
 
         # Grow the neurons
-        W_cur = np.concatenate((W_cur, np.random.randn(n_new_neurons, W_cur.shape[1]) * np.sqrt(2/W_cur.shape[1])), axis=0)
+        W_cur = np.concatenate((W_cur, np.random.randn(n_new_neurons, W_cur.shape[1]) * scaling_factor * np.sqrt(2/W_cur.shape[1])), axis=0)
         b_cur = np.concatenate((b_cur, np.zeros((n_new_neurons, 1))), axis=0)
-        W_next = np.concatenate((W_next, np.random.randn(W_next.shape[0], n_new_neurons) * scaling_factor * np.sqrt(2/(W_next.shape[1]+n_new_neurons))), axis=1)
+        W_next = np.concatenate((W_next, np.random.randn(W_next.shape[0], n_new_neurons) * np.sqrt(2/(W_next.shape[1]+n_new_neurons))), axis=1)
 
         parameters["W" + str(l + 1)] = W_cur
         parameters["b" + str(l + 1)] = b_cur
         parameters["W" + str(l + 2)] = W_next
+
+
+def get_param_string(parameters_array):
+    param_string = ""
+    max_parameters = np.amax(np.abs(parameters_array), 1)
+    magnitudes = np.floor(np.log10(max_parameters))
+    for m in magnitudes:
+        if m > 0:
+            m = 0
+        param_string += str(int(-m))
+    return param_string
+
+
+def train_dynamic_model(X, y, parameters, learning_rate=0.01, l1_term=0.002, n_iterations=15):
+    iteration = 1
+    while iteration <= n_iterations:
+        parameters = train_model(X, y, parameters, learning_rate=learning_rate, l1_term=l1_term, self_scale=True,
+                                 self_scale_coef=None, num_epochs=5, print_cost=True)
+        print(f"Iteration {iteration}: accuracy {measure_accuracy(parameters, X, y)}")
+        prune_neurons(parameters)
+        print(f"After pruning: {get_layer_sizes(parameters)}")
+        print(get_param_string(parameters['W1']))
+        print(get_param_string(parameters['W2']))
+        grow_neurons(parameters)
+        print(f"After growing: {get_layer_sizes(parameters)}")
+        print(get_param_string(parameters['W1']))
+        print(get_param_string(parameters['W2']))
+        iteration += 1
+        print("-------------------")
+    return parameters
 
 
 def get_layer_sizes(parameters):
