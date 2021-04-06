@@ -1,7 +1,6 @@
-from .utils import measure_accuracy
-
 import numpy as np
 import math
+from sklearn.metrics import accuracy_score
 
 
 def sigmoid(Z):
@@ -485,7 +484,7 @@ def prune_neurons(parameters, threshold=0.001):
         parameters["W" + str(l + 2)] = W_next
 
 
-def grow_neurons(parameters, scaling_factor=0.1):
+def grow_neurons(parameters, scaling_factor=0.001):
     L = len(parameters) // 2
 
     for l in range(L - 1):
@@ -520,15 +519,15 @@ def get_param_string(parameters_array):
 def train_dynamic_model(X, y, parameters, learning_rate=0.01, l1_term=0.002, n_iterations=15):
     iteration = 1
     while iteration <= n_iterations:
+        grow_neurons(parameters)
+        print(f"After growing: {get_layer_sizes(parameters)}")
+        print(get_param_string(parameters['W1']))
+        print(get_param_string(parameters['W2']))
         parameters = train_model(X, y, parameters, learning_rate=learning_rate, l1_term=l1_term, self_scale=True,
-                                 self_scale_coef=None, num_epochs=5, print_cost=True)
+                                 self_scale_coef=None, num_epochs=2, print_cost=True)
         print(f"Iteration {iteration}: accuracy {measure_accuracy(parameters, X, y)}")
         prune_neurons(parameters)
         print(f"After pruning: {get_layer_sizes(parameters)}")
-        print(get_param_string(parameters['W1']))
-        print(get_param_string(parameters['W2']))
-        grow_neurons(parameters)
-        print(f"After growing: {get_layer_sizes(parameters)}")
         print(get_param_string(parameters['W1']))
         print(get_param_string(parameters['W2']))
         iteration += 1
@@ -545,3 +544,9 @@ def get_layer_sizes(parameters):
         layer_sizes.append(parameters["W" + str(l + 1)].shape[0])
 
     return layer_sizes
+
+
+def measure_accuracy(parameters, X, y, threshold=0.5):
+    p, _ = forward(X, parameters)
+    y_pred = (p >= threshold).astype(int)
+    return accuracy_score(y.reshape((-1), ), y_pred.reshape((-1), ))
