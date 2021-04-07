@@ -86,7 +86,7 @@ def sigmoid_backward(dA, cache):
     return dZ
 
 
-def random_mini_batches(X, Y, mini_batch_size=64, seed=0):
+def random_mini_batches(X, Y, mini_batch_size=64):
     """
     Creates a list of random minibatches from (X, Y)
 
@@ -98,8 +98,6 @@ def random_mini_batches(X, Y, mini_batch_size=64, seed=0):
     Returns:
     mini_batches -- list of synchronous (mini_batch_X, mini_batch_Y)
     """
-
-    np.random.seed(seed)  # To make your "random" minibatches the same as ours
     m = X.shape[1]  # number of training examples
     mini_batches = []
 
@@ -137,8 +135,6 @@ def initialize_parameters(layer_dims):
                     Wl -- weight matrix of shape (layer_dims[l], layer_dims[l-1])
                     bl -- bias vector of shape (layer_dims[l], 1)
     """
-
-    np.random.seed(3)
     parameters = {}
     L = len(layer_dims)  # number of layers in the network
 
@@ -520,12 +516,14 @@ def train_dynamic_model(X, y, parameters, learning_rate=0.01, l1_term=0.002, n_i
     iteration = 1
     while iteration <= n_iterations:
         grow_neurons(parameters)
-        print(f"After growing: {get_layer_sizes(parameters)}")
-        print(get_param_string(parameters['W1']))
-        print(get_param_string(parameters['W2']))
+        # print(f"After growing: {get_layer_sizes(parameters)}")
+        # print(get_param_string(parameters['W1']))
+        # print(get_param_string(parameters['W2']))
         parameters = train_model(X, y, parameters, learning_rate=learning_rate, l1_term=l1_term, self_scale=True,
-                                 self_scale_coef=None, num_epochs=2, print_cost=True)
+                                 self_scale_coef=None, num_epochs=1, print_cost=True)
         print(f"Iteration {iteration}: accuracy {measure_accuracy(parameters, X, y)}")
+        # print(get_param_string(parameters['W1']))
+        # print(get_param_string(parameters['W2']))
         prune_neurons(parameters)
         print(f"After pruning: {get_layer_sizes(parameters)}")
         print(get_param_string(parameters['W1']))
