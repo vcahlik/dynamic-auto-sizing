@@ -2,4 +2,3 @@
 notebooks/.ipynb_checkpoints/
 notebooks/experiments/.ipynb_checkpoints/
 nets/__pycache__/
-datasets/
