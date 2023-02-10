@@ -1,0 +1,33 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+authors:
+- family-names: "Cahlik"
+  given-names: "Vojtech"
+  orcid: "https://orcid.org/0000-0002-4222-8746"
+- family-names: "Kordik"
+  given-names: "Pavel"
+  orcid: "https://orcid.org/0000-0003-1433-0089"
+- family-names: "Cepek"
+  given-names: "Miroslav"
+  orcid: "https://orcid.org/0000-0002-3765-867X"
+title: "Dynamic Auto-Sizing"
+url: "https://github.com/vcahlik/dynamic-auto-sizing"
+preferred-citation:
+  type: proceedings
+  authors:
+  - family-names: "Cahlik"
+    given-names: "Vojtech"
+    orcid: "https://orcid.org/0000-0002-4222-8746"
+  - family-names: "Kordik"
+    given-names: "Pavel"
+    orcid: "https://orcid.org/0000-0003-1433-0089"
+  - family-names: "Cepek"
+    given-names: "Miroslav"
+    orcid: "https://orcid.org/0000-0002-3765-867X"
+  doi: "10.1109/CSIT56902.2022.10000471"
+  url: "https://doi.org/10.1109/CSIT56902.2022.10000471"
+  collection-title: "2022 IEEE 17th International Conference on Computer Sciences and Information Technologies (CSIT)"
+  start: 592
+  end: 596
+  title: "Adapting the Size of Artificial Neural Networks Using Dynamic Auto-Sizing"
+  year: 2022
