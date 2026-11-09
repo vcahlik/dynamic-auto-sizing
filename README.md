@@ -20,7 +20,7 @@ Implementation of the **dynamic auto-sizing technique** which we presented in th
 
 ## Citing
 
-In case you find this repository helpful, feel free to cite the published paper [Adapting the Size of Artificial Neural Networks Using Dynamic Auto-Sizing](https://doi.org/10.1109/CSIT56902.2022.10000471):
+In the case that you find this repository helpful, feel free to cite the published paper [Adapting the Size of Artificial Neural Networks Using Dynamic Auto-Sizing](https://doi.org/10.1109/CSIT56902.2022.10000471):
 
     @inproceedings{10000471,
         title        = {Adapting the Size of Artificial Neural Networks Using Dynamic Auto-Sizing},
